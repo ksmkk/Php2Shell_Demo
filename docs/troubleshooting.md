@@ -15,7 +15,7 @@ Trabaja desde la raíz del repositorio. Usa `bash scripts/lab.sh status` para ve
 
 ## Docker funciona con `sudo`, pero no con la cuenta `kali`
 
-Si `docker info` muestra `permission denied` para `/var/run/docker.sock` y `sudo docker info` sí muestra el servidor, el motor ya está activo. Falta acceso a su socket para la sesión actual. En una VM Kali dedicada, el administrador puede añadir esa cuenta al grupo `docker`:
+Si `docker info` muestra `permission denied` para `/var/run/docker.sock` y `sudo docker info` sí muestra el servidor, el motor ya está activo. Falta acceso a su socket para la sesión actual. `./deploy.sh` detecta este caso en Kali, añade la cuenta al grupo `docker` y continúa con `sg docker`. Puede pedir la contraseña de `sudo`. Si el entorno impide esta corrección automática, en una VM Kali dedicada el administrador puede hacerlo manualmente:
 
 ```bash
 sudo usermod -aG docker "$USER"

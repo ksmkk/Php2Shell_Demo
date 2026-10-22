@@ -61,18 +61,49 @@ if ! command -v curl >/dev/null; then
     install_kali_packages curl
 fi
 
+local_kali_docker=false
+if is_kali && [[ -z "${DOCKER_HOST:-}" ]] && [[ "$(docker context show 2>/dev/null || true)" == default ]]; then
+    local_kali_docker=true
+fi
+
 if ! info_error="$(docker info --format '{{.ServerVersion}}' 2>&1)"; then
-    if [[ "$info_error" == *'permission denied'* ]]; then
-        echo "$info_error" >&2
-        echo 'Docker está instalado, pero esta cuenta no puede acceder al socket.' >&2
-        echo 'Comprueba sudo docker info y sigue docs/troubleshooting.md para renovar los grupos.' >&2
-        exit 1
-    fi
-    if is_kali && [[ -z "${DOCKER_HOST:-}" ]] && [[ "$(docker context show 2>/dev/null || true)" == default ]]; then
+    if [[ "$local_kali_docker" == true ]] && command -v systemctl >/dev/null && ! systemctl is-active --quiet docker; then
         echo 'Docker está instalado; intentando iniciar el servicio local...'
-        sudo systemctl start docker
+        sudo systemctl start docker || true
+        info_error="$(docker info --format '{{.ServerVersion}}' 2>&1)" || true
     fi
-    if ! docker info --format '{{.ServerVersion}}' >/dev/null; then
+
+    if ! docker info --format '{{.ServerVersion}}' >/dev/null 2>&1; then
+        if [[ "$local_kali_docker" == true && "$info_error" == *'permission denied'* ]]; then
+            if [[ "${PHP2SHELL_GROUP_RETRY:-0}" == 1 ]]; then
+                echo 'El acceso al socket sigue denegado después de activar el grupo docker.' >&2
+                exit 1
+            fi
+            if ! command -v sudo >/dev/null || ! command -v sg >/dev/null || ! command -v getent >/dev/null; then
+                echo 'Faltan sudo, sg o getent; revisa docs/troubleshooting.md.' >&2
+                exit 1
+            fi
+            if [[ ! -S /var/run/docker.sock ]] || [[ "$(stat -c '%G' /var/run/docker.sock)" != docker ]] || ! getent group docker >/dev/null; then
+                echo 'El socket no pertenece al grupo docker; revisa su configuración antes de cambiar permisos.' >&2
+                exit 1
+            fi
+            if ! sudo docker info --format '{{.ServerVersion}}' >/dev/null; then
+                echo 'El motor tampoco responde con sudo; revisa sudo systemctl status docker.' >&2
+                exit 1
+            fi
+
+            current_user="$(id -un)"
+            if [[ " $(id -nG "$current_user") " != *' docker '* ]]; then
+                echo "Agregando $current_user al grupo docker para esta VM (acceso administrativo al motor)."
+                sudo usermod -aG docker "$current_user"
+            fi
+            echo 'Continuando el despliegue en una sesión con el grupo docker activo...'
+            if [[ "$offline" == true ]]; then
+                exec sg docker -c 'exec env PHP2SHELL_GROUP_RETRY=1 bash ./deploy.sh --offline'
+            fi
+            exec sg docker -c 'exec env PHP2SHELL_GROUP_RETRY=1 bash ./deploy.sh'
+        fi
+        printf '%s\n' "$info_error" >&2
         echo 'El motor Docker sigue sin responder. Revisa sudo systemctl status docker y docker info.' >&2
         exit 1
     fi
