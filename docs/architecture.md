@@ -33,11 +33,11 @@ Las etiquetas de imagen deben complementarse con los digests registrados durante
 
 ## Superficie de la aplicación
 
-- `/`: inicia y cierra una sesión ordinaria para entregar la cookie al navegador; muestra la versión real, enlaces y un formulario multipart.
+- `/`: portal ficticio Archivo Costero; inicia y cierra una sesión ordinaria y muestra un formulario multipart. La versión se anuncia en `X-Powered-By`.
 - `/health.php`: respuesta mínima para salud.
-- `/diagnostics.php`: versión, SAPI, PID y parámetros relevantes.
+- `/diagnostics.php`: versión, SAPI, PID y parámetros relevantes; solo accesible desde el loopback del propio contenedor. La pasarela pública devuelve 403.
 - `/upload.php`: procesa un archivo temporal y calcula SHA-256 sin moverlo al directorio web.
-- `/observations.php`: tabla imprimible para registrar datos de ambas versiones.
+- La hoja de observación se genera en `evidence/` mediante `scripts/capture.sh`.
 
 No hay inclusión de rutas proporcionadas por el usuario, ejecución de archivos subidos ni deserialización de datos de la solicitud. El formulario incluye el campo que activa el seguimiento de carga de PHP; las pruebas diagnósticas adicionales se diseñarán y documentarán en la Fase 4.
 

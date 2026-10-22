@@ -1,6 +1,6 @@
 # Laboratorio PHP2SHELL · Academia de Ciberseguridad UCN
 
-Laboratorio local para comparar PHP **8.4.26** y **8.4.27** con la misma aplicación, configuración y servidor Apache/mod_php. Cada alumno ejecuta su propia copia dentro de Kali Linux en VirtualBox. La aplicación permite observar solicitudes y cargas multipart, consultar diagnósticos y registrar resultados. La primera etapa experimental se limita a observación y análisis; no incluye una cadena automatizada de RCE.
+Mini CTF local para comparar PHP **8.4.26** y **8.4.27** con la misma aplicación, configuración y servidor Apache/mod_php. Cada alumno ejecuta su propia copia dentro de Kali Linux en VirtualBox. El objetivo visible es un portal ficticio de gestión documental; la guía del desafío está en [docs/ctf.md](docs/ctf.md). La primera etapa experimental se limita a reconocimiento, análisis y comparación; no incluye una cadena automatizada de RCE.
 
 ## Despliegue rápido
 
@@ -11,6 +11,8 @@ Desde la raíz del proyecto, con Docker Engine y Docker Compose disponibles:
 ```
 
 Si tu copia perdió el permiso de ejecución al transportarla, usa `bash deploy.sh`.
+
+Después de actualizar una instalación existente con `git pull --ff-only`, ejecuta `./deploy.sh --rebuild` para incorporar la nueva aplicación a las dos imágenes.
 
 En Kali, el script instala `docker.io`, `docker-compose` y `curl` desde los repositorios configurados si faltan. Puede pedir la contraseña de `sudo` y requiere internet para esa instalación. Si Docker ya existe pero el servicio está detenido, intenta iniciarlo. Si la cuenta no puede abrir el socket local de Docker y el motor sí responde con `sudo`, agrega esa cuenta al grupo `docker` y continúa en una sesión con el grupo activo. Esta pertenencia concede acceso administrativo a Docker dentro de la VM; al terminar el script, abre una nueva sesión para que otros comandos también hereden el grupo. Consulta [la resolución de problemas](docs/troubleshooting.md). Después usa las imágenes locales si están presentes; si faltan, importa el paquete de `offline/` cuando está disponible o construye las imágenes oficiales con internet. Crea `.env` con los puertos locales predeterminados, inicia los cuatro servicios y verifica las versiones. Dentro de Kali sin internet, con Docker y el archivo de imágenes ya preparados, usa `bash deploy.sh --offline`. El script no envía solicitudes para provocar las CVE.
 
@@ -55,7 +57,7 @@ bash scripts/lab.sh status
 bash tests/isolation.sh
 ```
 
-Abre `http://127.0.0.1:8081/` para PHP 8.4.26 y `http://127.0.0.1:8082/` para PHP 8.4.27 **desde Kali**. Si esos puertos están ocupados, edita `.env` antes de iniciar los servicios. El sistema anfitrión y los demás alumnos no comparten estos puertos: `127.0.0.1` se refiere a la VM Kali.
+Abre `http://127.0.0.1:8081/` para PHP 8.4.26 y `http://127.0.0.1:8082/` para PHP 8.4.27 **desde Kali**. La página no anuncia su versión en el contenido; el alumno la descubre en la cabecera HTTP `X-Powered-By`. Si esos puertos están ocupados, edita `.env` antes de iniciar los servicios. El sistema anfitrión y los demás alumnos no comparten estos puertos: `127.0.0.1` se refiere a la VM Kali.
 
 Comandos de operación:
 
@@ -78,5 +80,5 @@ Los contenedores PHP tienen un límite inicial de 512 MiB y un CPU cada uno. El 
 
 ## Estado de validación
 
-El 22 de octubre de 2026 se construyeron y arrancaron las imágenes en Docker Desktop. Pasaron las verificaciones de versiones HTTP, cargas multipart benignas, restauración individual, separación entre contenedores y exportación/importación de imágenes. Consulta [el estado de la Fase 4](docs/validation-status.md) para ver el alcance y las pruebas pendientes en Kali. Ningún resultado de explotación se declara verificado aquí.
+El 22 de octubre de 2026 se reconstruyeron y arrancaron las imágenes en Docker Desktop con el portal Archivo Costero. Pasaron las verificaciones de versiones HTTP, cargas multipart benignas y separación entre contenedores. Consulta [el estado de la Fase 4](docs/validation-status.md) para ver el alcance y las pruebas pendientes en Kali. Ningún resultado de explotación se declara verificado aquí.
 

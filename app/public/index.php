@@ -1,64 +1,18 @@
 <?php
 declare(strict_types=1);
-
-// Crea una sesión ordinaria para que el navegador envíe su cookie en la
-// solicitud multipart. El procesamiento de upload_progress ocurre antes
-// de ejecutar upload.php.
 session_start();
 session_write_close();
-
-$version = PHP_VERSION;
-$sapi = PHP_SAPI;
 ?>
 <!doctype html>
 <html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Laboratorio PHP2SHELL · Academia de Ciberseguridad UCN</title>
-    <link rel="stylesheet" href="/style.css">
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Archivo Costero | Gestión documental</title><meta name="description" content="Portal de recepción y consulta documental de Archivo Costero."><link rel="stylesheet" href="/style.css"></head>
 <body>
-<header class="masthead">
-    <div class="wrap">
-        <p class="eyebrow">Academia de Ciberseguridad UCN · Laboratorio docente</p>
-        <h1>PHP2SHELL</h1>
-        <p>Observa el ciclo de vida de las solicitudes y compara dos versiones reales de PHP.</p>
-    </div>
-</header>
-<main class="wrap">
-    <section class="panel">
-        <h2>Esta instancia</h2>
-        <dl class="facts">
-            <div><dt>Versión de PHP</dt><dd><?= htmlspecialchars($version, ENT_QUOTES, 'UTF-8') ?></dd></div>
-            <div><dt>Interfaz de servidor</dt><dd><?= htmlspecialchars($sapi, ENT_QUOTES, 'UTF-8') ?></dd></div>
-            <div><dt>Salud</dt><dd><a href="/health.php">Comprobar respuesta</a></dd></div>
-        </dl>
-        <p class="note">La versión y el SAPI se obtienen del proceso actual. Para verificar el contenedor y sus límites, usa <code>./scripts/verify.sh</code> en Kali.</p>
-    </section>
-
-    <div class="grid">
-        <section class="panel">
-            <h2>Solicitud multipart</h2>
-            <p>Sube un archivo de prueba. La aplicación lee sus metadatos y calcula un resumen SHA-256; no lo guarda en el directorio web.</p>
-            <form action="/upload.php" method="post" enctype="multipart/form-data">
-                <input type="hidden" name="PHP_SESSION_UPLOAD_PROGRESS" value="ucn-lab">
-                <label for="sample">Archivo de prueba</label>
-                <input id="sample" name="sample" type="file" required>
-                <button type="submit">Procesar archivo</button>
-            </form>
-        </section>
-        <section class="panel">
-            <h2>Explorar</h2>
-            <ul>
-                <li><a href="/diagnostics.php">Diagnóstico JSON</a>: versión, SAPI y proceso.</li>
-                <li><a href="/observations.php">Hoja de observaciones</a>: registra resultados de ambas versiones.</li>
-            </ul>
-            <p class="note">Una respuesta HTTP, un error de memoria o una caída no demuestran por sí solos ejecución de código.</p>
-        </section>
-    </div>
+<div class="topline"><div class="wrap">Archivo Costero <span>Portal de servicios digitales</span></div></div>
+<header class="site-header wrap"><a class="brand" href="/" aria-label="Archivo Costero, inicio"><span class="brand-mark">AC</span><span>Archivo<br><strong>Costero</strong></span></a><nav aria-label="Navegación principal"><a href="#servicios">Servicios</a><a href="#tramite">Ingresar documento</a><a href="#contacto">Contacto</a></nav></header>
+<main>
+<section class="hero"><div class="wrap hero-grid"><div><p class="eyebrow">Gestión documental en línea</p><h1>Un lugar para mantener cada registro en orden.</h1><p class="lead">Recibimos antecedentes, organizamos expedientes y ayudamos a dar seguimiento a las solicitudes de nuestra comunidad.</p><a class="button" href="#tramite">Ingresar un documento <span aria-hidden="true">↗</span></a></div><div class="hero-art" aria-hidden="true"><div class="art-card art-back"></div><div class="art-card art-front"><span>ARCHIVO / 2026</span><div></div><div></div><div></div><b>01—04</b></div><div class="art-seal">AC</div></div></div></section>
+<section class="wrap section" id="servicios"><div class="section-heading"><p class="eyebrow">Nuestros servicios</p><h2>Documentación clara, de principio a fin.</h2></div><div class="cards"><article class="card"><span class="card-number">01</span><h3>Recepción digital</h3><p>Envía documentos para su revisión inicial mediante nuestro formulario.</p></article><article class="card"><span class="card-number">02</span><h3>Registro de antecedentes</h3><p>Mantén identificados los archivos y sus datos principales durante la recepción.</p></article><article class="card"><span class="card-number">03</span><h3>Orientación</h3><p>Encuentra los pasos necesarios para preparar y presentar tus antecedentes.</p></article></div></section>
+<section class="submission" id="tramite"><div class="wrap submission-grid"><div><p class="eyebrow">Mesa de entrada</p><h2>Ingresar un documento</h2><p>Selecciona el archivo que deseas presentar. Esta recepción inicial muestra un comprobante con el tamaño y la huella digital del archivo.</p><div class="info-box"><strong>Antes de comenzar</strong><p>Tamaño máximo: 8 MB. El comprobante no equivale a una solicitud formal ni almacena el archivo para consultas posteriores.</p></div></div><form class="upload-form" action="/upload.php" method="post" enctype="multipart/form-data"><input type="hidden" name="PHP_SESSION_UPLOAD_PROGRESS" value="recepcion-documental"><label for="sample">Documento a revisar</label><input id="sample" name="sample" type="file" required><p class="field-help">Puedes seleccionar un PDF, una imagen u otro archivo de prueba.</p><button class="button" type="submit">Generar comprobante <span aria-hidden="true">→</span></button></form></div></section>
 </main>
-<footer class="wrap"><p>Uso exclusivo en la VM local del laboratorio autorizado.</p></footer>
-</body>
-</html>
-
+<footer id="contacto"><div class="wrap footer-grid"><div class="brand footer-brand"><span class="brand-mark">AC</span><span>Archivo<br><strong>Costero</strong></span></div><div><strong>Atención digital</strong><p>Recepción documental disponible en este portal.</p></div><div><strong>Información</strong><p>Servicio de demostración. No envíes datos personales ni documentos reales.</p></div></div><div class="wrap footer-bottom">© 2026 Archivo Costero · Portal de demostración</div></footer>
+</body></html>

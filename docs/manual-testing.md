@@ -29,7 +29,7 @@ bash scripts/capture.sh antes
 
 `deploy.sh --offline` importa el archivo de imágenes verificado cuando hace falta, inicia Compose y ejecuta `scripts/verify.sh`. Sin `--offline`, el mismo comando puede construir las imágenes si todavía faltan y no hay paquete local.
 
-Abre `http://127.0.0.1:8081/` y `http://127.0.0.1:8082/` **dentro de Kali**. La primera dirección atiende PHP 8.4.26 y la segunda PHP 8.4.27. Comprueba la versión y el PID en `/diagnostics.php`. `scripts/verify.sh` comprueba versión, SAPI y enlace local; `tests/isolation.sh` comprueba que los contenedores PHP no tengan conectividad directa entre sí ni salida TCP directa de la red interna.
+Abre `http://127.0.0.1:8081/` y `http://127.0.0.1:8082/` **dentro de Kali**. La primera dirección atiende PHP 8.4.26 y la segunda PHP 8.4.27. Descubre la versión mediante la cabecera HTTP y sigue [el desafío](ctf.md). `/diagnostics.php` no está disponible por la pasarela; `scripts/capture.sh` lo consulta desde dentro del contenedor para registrar el PID. `scripts/verify.sh` comprueba versión, SAPI y enlace local; `tests/isolation.sh` comprueba que los contenedores PHP no tengan conectividad directa entre sí ni salida TCP directa de la red interna.
 
 Si usas Docker Desktop en Windows para un ensayo separado, ejecuta los mismos comandos con Git Bash. `127.0.0.1` se refiere entonces a Windows. No confundas ese resultado con una validación de Kali.
 

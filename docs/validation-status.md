@@ -1,5 +1,7 @@
 # Fase 4: estado de validación
 
+Actualización del 22 de octubre de 2026: el portal ficticio Archivo Costero se construyó en ambas imágenes y se probó en Docker Desktop. `scripts/verify.sh` confirmó PHP 8.4.26 y 8.4.27, SAPI `apache2handler`, `X-Powered-By` y la denegación pública de `/diagnostics.php`. El envío multipart benigno produjo un comprobante SHA-256 en ambos puertos; `tests/isolation.sh` confirmó la separación de redes. La comprobación en Kali y la reproducción manual de la CVE siguen pendientes.
+
 **Fecha:** 22 de octubre de 2026. **Entorno usado hasta ahora:** Docker Engine 29.9.1 sobre Docker Desktop en Windows, Docker Compose 5.6.0. Este entorno sirve para integrar los contenedores; todavía no sustituye la prueba en Kali Linux dentro de VirtualBox.
 
 ## Resultados observados

@@ -7,19 +7,22 @@ cd "$ROOT"
 
 usage() {
     cat <<'EOF'
-Uso: ./deploy.sh [--offline] (o bash deploy.sh [--offline])
+Uso: ./deploy.sh [--offline|--rebuild] (o bash deploy.sh [--offline|--rebuild])
 
 Sin opción: instala Docker en Kali si falta, usa imágenes locales, importa
 offline/ si existe o construye las imágenes oficiales cuando hay internet.
 --offline impide instalaciones y descargas. Después inicia Compose y verifica
 ambas versiones.
+--rebuild reconstruye las imágenes PHP después de actualizar el repositorio.
 EOF
 }
 
 offline=false
+rebuild=false
 case "${1:-}" in
     "") ;;
     --offline) offline=true ;;
+    --rebuild) rebuild=true ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; exit 2 ;;
 esac
@@ -101,6 +104,9 @@ if ! info_error="$(docker info --format '{{.ServerVersion}}' 2>&1)"; then
             if [[ "$offline" == true ]]; then
                 exec sg docker -c 'exec env PHP2SHELL_GROUP_RETRY=1 bash ./deploy.sh --offline'
             fi
+            if [[ "$rebuild" == true ]]; then
+                exec sg docker -c 'exec env PHP2SHELL_GROUP_RETRY=1 bash ./deploy.sh --rebuild'
+            fi
             exec sg docker -c 'exec env PHP2SHELL_GROUP_RETRY=1 bash ./deploy.sh'
         fi
         printf '%s\n' "$info_error" >&2
@@ -128,7 +134,10 @@ for image in "${images[@]}"; do
     fi
 done
 
-if [[ "$missing" == true ]]; then
+if [[ "$rebuild" == true ]]; then
+    echo 'Reconstruyendo las imágenes PHP con el código actual...'
+    bash scripts/lab.sh build
+elif [[ "$missing" == true ]]; then
     archive=offline/php2shell-images-8.4.26-8.4.27.tar
     if [[ -f "$archive" && -f "$archive.sha256" ]]; then
         echo 'Importando imágenes del paquete offline verificado...'

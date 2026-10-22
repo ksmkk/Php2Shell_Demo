@@ -44,10 +44,11 @@ for service in vulnerable patched; do
 
     binding="$(docker compose port "gateway-$service" 8080 2>/dev/null || true)"
     if [[ "$binding" == 127.0.0.1:* ]]; then
+        docker compose exec -T "$service" php -r 'echo file_get_contents("http://127.0.0.1/diagnostics.php");' > "$dest/${service}-diagnostics.json" 2>&1 || true
         curl --silent --show-error --max-time 5 \
-            --output "$dest/${service}-diagnostics.json" \
+            --output /dev/null \
             --write-out 'http_code=%{http_code}\nremote_ip=%{remote_ip}\ntime_total=%{time_total}\n' \
-            "http://${binding}/diagnostics.php" \
+            "http://${binding}/health.php" \
             > "$dest/${service}-http.txt" 2>&1 || true
     else
         printf 'Puerto local no disponible: %s\n' "$binding" > "$dest/${service}-http.txt"
