@@ -7,12 +7,14 @@ Laboratorio local para comparar PHP **8.4.26** y **8.4.27** con la misma aplicac
 Desde la raíz del proyecto, con Docker Engine y Docker Compose disponibles:
 
 ```bash
-bash deploy.sh
+./deploy.sh
 ```
 
-El script usa las imágenes locales si están presentes; si faltan, importa el paquete de `offline/` cuando está disponible o construye las imágenes oficiales con internet. Crea `.env` con los puertos locales predeterminados, inicia los cuatro servicios y verifica las versiones. Dentro de Kali sin internet, con el archivo de imágenes ya copiado, usa `bash deploy.sh --offline`. El script no envía solicitudes para provocar las CVE.
+Si tu copia perdió el permiso de ejecución al transportarla, usa `bash deploy.sh`.
 
-Cuando estos archivos estén publicados en el remoto, el flujo será `git clone`, entrar en la carpeta y ejecutar `bash deploy.sh`. El paquete de imágenes de `offline/` se distribuye aparte porque está excluido de Git.
+En Kali, el script instala `docker.io`, `docker-compose` y `curl` desde los repositorios configurados si faltan. Puede pedir la contraseña de `sudo` y requiere internet para esa instalación. Si Docker ya existe pero el servicio está detenido, intenta iniciarlo. Un error de permisos del socket no provoca una reinstalación: consulta [la resolución de problemas](docs/troubleshooting.md). Después usa las imágenes locales si están presentes; si faltan, importa el paquete de `offline/` cuando está disponible o construye las imágenes oficiales con internet. Crea `.env` con los puertos locales predeterminados, inicia los cuatro servicios y verifica las versiones. Dentro de Kali sin internet, con Docker y el archivo de imágenes ya preparados, usa `bash deploy.sh --offline`. El script no envía solicitudes para provocar las CVE.
+
+Para usar otra Kali con internet, clona este repositorio, entra en la carpeta y ejecuta `./deploy.sh`. El paquete de imágenes de `offline/` se distribuye aparte porque está excluido de Git.
 
 ## Requisitos
 

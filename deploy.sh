@@ -7,11 +7,12 @@ cd "$ROOT"
 
 usage() {
     cat <<'EOF'
-Uso: bash deploy.sh [--offline]
+Uso: ./deploy.sh [--offline] (o bash deploy.sh [--offline])
 
-Sin opción: usa imágenes locales, importa offline/ si existe o construye
-las imágenes oficiales cuando hay internet. --offline impide construir o
-descargar imágenes. Después inicia Compose y verifica ambas versiones.
+Sin opción: instala Docker en Kali si falta, usa imágenes locales, importa
+offline/ si existe o construye las imágenes oficiales cuando hay internet.
+--offline impide instalaciones y descargas. Después inicia Compose y verifica
+ambas versiones.
 EOF
 }
 
@@ -24,10 +25,58 @@ case "${1:-}" in
 esac
 if [[ $# -gt 1 ]]; then usage >&2; exit 2; fi
 
-command -v docker >/dev/null || { echo 'Falta Docker CLI.' >&2; exit 1; }
-command -v curl >/dev/null || { echo 'Falta curl.' >&2; exit 1; }
-docker info >/dev/null 2>&1 || { echo 'El motor Docker no está disponible.' >&2; exit 1; }
-docker compose version >/dev/null || { echo 'Falta Docker Compose.' >&2; exit 1; }
+is_kali() {
+    [[ -r /etc/os-release ]] || return 1
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    [[ "${ID:-}" == kali ]]
+}
+
+install_kali_packages() {
+    if [[ "$offline" == true ]]; then
+        echo 'Faltan componentes; --offline no permite instalarlos. Prepáralos antes de la clase.' >&2
+        exit 1
+    fi
+    if ! is_kali || ! command -v apt-get >/dev/null || ! command -v sudo >/dev/null; then
+        echo 'La instalación automática solo está disponible en Kali con apt y sudo.' >&2
+        exit 1
+    fi
+    echo "Instalando desde los repositorios configurados de Kali: $*"
+    sudo apt-get update
+    sudo apt-get install -y "$@"
+}
+
+if ! command -v docker >/dev/null; then
+    install_kali_packages docker.io docker-compose curl
+fi
+if ! docker compose version >/dev/null 2>&1; then
+    if command -v dpkg-query >/dev/null && dpkg-query -W -f='${Status}' docker.io 2>/dev/null | grep -qx 'install ok installed'; then
+        install_kali_packages docker-compose
+    else
+        echo 'Falta Docker Compose; instala el complemento compatible con tu instalación de Docker.' >&2
+        exit 1
+    fi
+fi
+if ! command -v curl >/dev/null; then
+    install_kali_packages curl
+fi
+
+if ! info_error="$(docker info --format '{{.ServerVersion}}' 2>&1)"; then
+    if [[ "$info_error" == *'permission denied'* ]]; then
+        echo "$info_error" >&2
+        echo 'Docker está instalado, pero esta cuenta no puede acceder al socket.' >&2
+        echo 'Comprueba sudo docker info y sigue docs/troubleshooting.md para renovar los grupos.' >&2
+        exit 1
+    fi
+    if is_kali && [[ -z "${DOCKER_HOST:-}" ]] && [[ "$(docker context show 2>/dev/null || true)" == default ]]; then
+        echo 'Docker está instalado; intentando iniciar el servicio local...'
+        sudo systemctl start docker
+    fi
+    if ! docker info --format '{{.ServerVersion}}' >/dev/null; then
+        echo 'El motor Docker sigue sin responder. Revisa sudo systemctl status docker y docker info.' >&2
+        exit 1
+    fi
+fi
 
 if [[ ! -f .env ]]; then
     cp .env.example .env
