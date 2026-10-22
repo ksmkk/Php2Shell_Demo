@@ -1,0 +1,10 @@
+.git
+.env
+evidence
+offline
+docs
+scripts
+README.md
+*.tar
+*.tar.gz
+

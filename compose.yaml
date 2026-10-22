@@ -1,0 +1,87 @@
+name: academia-ucn-php2shell
+
+x-lab-common: &lab-common
+  init: true
+  tmpfs:
+    - /tmp:rw,nosuid,size=128m
+  security_opt:
+    - no-new-privileges:true
+  pids_limit: 64
+  mem_limit: 512m
+  memswap_limit: 512m
+  cpus: 1.0
+  restart: "no"
+  healthcheck:
+    test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1/health.php') === 'ok' ? 0 : 1);"]
+    interval: 15s
+    timeout: 5s
+    retries: 3
+    start_period: 20s
+
+services:
+  vulnerable:
+    <<: *lab-common
+    image: academia-ucn/php2shell:vulnerable-8.4.26
+    build:
+      context: .
+      dockerfile: images/vulnerable/Dockerfile
+    networks: [vulnerable_net]
+
+  patched:
+    <<: *lab-common
+    image: academia-ucn/php2shell:patched-8.4.27
+    build:
+      context: .
+      dockerfile: images/patched/Dockerfile
+    networks: [patched_net]
+
+  gateway-vulnerable:
+    image: haproxy:3.0-alpine
+    user: "99:99"
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    pids_limit: 32
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.25
+    volumes:
+      - ./config/gateway/vulnerable.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - host_ip: 127.0.0.1
+        published: "${VULNERABLE_PORT:-8081}"
+        target: 8080
+        protocol: tcp
+    networks: [vulnerable_net, front_net]
+    depends_on: [vulnerable]
+    restart: "no"
+
+  gateway-patched:
+    image: haproxy:3.0-alpine
+    user: "99:99"
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    pids_limit: 32
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.25
+    volumes:
+      - ./config/gateway/patched.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - host_ip: 127.0.0.1
+        published: "${PATCHED_PORT:-8082}"
+        target: 8080
+        protocol: tcp
+    networks: [patched_net, front_net]
+    depends_on: [patched]
+    restart: "no"
+
+networks:
+  vulnerable_net:
+    internal: true
+  patched_net:
+    internal: true
+  front_net: {}
+
+
