@@ -1,6 +1,6 @@
 # Laboratorio PHP2SHELL · Academia de Ciberseguridad UCN
 
-Mini CTF local para comparar PHP **8.4.26** y **8.4.27** con la misma aplicación, configuración y servidor Apache/mod_php. Cada alumno ejecuta su propia copia dentro de Kali Linux en VirtualBox. El objetivo visible es un portal ficticio de gestión documental; la guía del desafío está en [docs/ctf.md](docs/ctf.md). La primera etapa experimental se limita a reconocimiento, análisis y comparación; no incluye una cadena automatizada de RCE.
+Mini CTF local para comparar PHP **8.4.26** y **8.4.27** con la misma aplicación, configuración y servidor Apache/mod_php. Cada alumno ejecuta su propia copia dentro de Kali Linux en VirtualBox. El objetivo visible es un portal ficticio de gestión documental; la guía del desafío está en [docs/ctf.md](docs/ctf.md). El laboratorio se limita a reconocimiento, análisis y comparación; no incluye una cadena automatizada de RCE.
 
 ## Despliegue rápido
 
@@ -12,7 +12,7 @@ Desde la raíz del proyecto, con Docker Engine y Docker Compose disponibles:
 
 Si tu copia perdió el permiso de ejecución al transportarla, usa `bash deploy.sh`.
 
-Después de actualizar una instalación existente con `git pull --ff-only`, ejecuta `./deploy.sh --rebuild` para incorporar la nueva aplicación a las dos imágenes.
+Después de actualizar una instalación existente, ejecuta `./deploy.sh --rebuild` para incorporar la aplicación a las dos imágenes.
 
 En Kali, el script instala `docker.io`, `docker-compose` y `curl` desde los repositorios configurados si faltan. Puede pedir la contraseña de `sudo` y requiere internet para esa instalación. Si Docker ya existe pero el servicio está detenido, intenta iniciarlo. Si la cuenta no puede abrir el socket local de Docker y el motor sí responde con `sudo`, agrega esa cuenta al grupo `docker` y continúa en una sesión con el grupo activo. Esta pertenencia concede acceso administrativo a Docker dentro de la VM; al terminar el script, abre una nueva sesión para que otros comandos también hereden el grupo. Consulta [la resolución de problemas](docs/troubleshooting.md). Después usa las imágenes locales si están presentes; si faltan, importa el paquete de `offline/` cuando está disponible o construye las imágenes oficiales con internet. Crea `.env` con los puertos locales predeterminados, inicia los cuatro servicios y verifica las versiones. Dentro de Kali sin internet, con Docker y el archivo de imágenes ya preparados, usa `bash deploy.sh --offline`. El script no envía solicitudes para provocar las CVE.
 
@@ -53,6 +53,7 @@ Para ejecutar las verificaciones por separado:
 ```bash
 bash scripts/lab.sh start
 bash scripts/verify.sh
+bash scripts/compare-workers.sh
 bash scripts/lab.sh status
 bash tests/isolation.sh
 ```
@@ -76,9 +77,13 @@ bash scripts/lab.sh stop
 
 Las dos imágenes usan la misma carpeta `app/public/`, `config/php/lab.ini` y `config/apache/lab.conf`. Dos pasarelas HAProxy en modo TCP dejan pasar el tráfico sin reescribir HTTP; cada una conecta el puerto local de Kali con una sola red Docker interna. Los contenedores PHP no tienen puertos publicados directamente ni montajes de archivos del anfitrión. Consulta [la arquitectura](docs/architecture.md) y [la resolución de problemas](docs/troubleshooting.md). La [guía de operación manual](docs/manual-testing.md) explica la preparación de Kali, la captura de evidencia y la recuperación. `bash scripts/capture.sh <etiqueta>` registra ambas versiones sin generar pruebas de las CVE.
 
-Los contenedores PHP tienen un límite inicial de 512 MiB y un CPU cada uno. El `memory_limit` de PHP es 128 MiB. Son parámetros de partida que deberán medirse en la **Fase 4**; un límite de contenedor demasiado bajo puede matar el proceso antes de que PHP produzca un diagnóstico útil. El proceso maestro de la imagen oficial Apache conserva los privilegios requeridos por su configuración de puerto 80; esto es un riesgo residual dentro de una VM dedicada.
+Los contenedores PHP tienen un límite inicial de 512 MiB y un CPU cada uno. El `memory_limit` de PHP es 128 MiB. Mide estos límites en la VM antes de cualquier prueba potencialmente disruptiva; un límite de contenedor demasiado bajo puede matar el proceso antes de que PHP produzca un diagnóstico útil. El proceso maestro de la imagen oficial Apache conserva los privilegios requeridos por su configuración de puerto 80; esto es un riesgo residual dentro de una VM dedicada.
 
 ## Estado de validación
 
-El 22 de octubre de 2026 se reconstruyeron y arrancaron las imágenes en Docker Desktop con el portal Archivo Costero. Pasaron las verificaciones de versiones HTTP, cargas multipart benignas y separación entre contenedores. Consulta [el estado de la Fase 4](docs/validation-status.md) para ver el alcance y las pruebas pendientes en Kali. Ningún resultado de explotación se declara verificado aquí.
-
+El repositorio incluye verificaciones reproducibles de versiones, SAPI, configuración,
+cargas multipart benignas, aislamiento y restauración individual. Ejecuta
+`bash scripts/verify.sh` y `bash tests/isolation.sh` en la VM de clase y conserva sus
+salidas en `evidence/`. La comprobación de las CVE requiere una ejecución controlada con
+instrumentación y no se declara satisfecha por un HTTP 500, un timeout, un OOM o una shell
+aparente.

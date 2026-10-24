@@ -1,37 +1,36 @@
-# Fase 4: estado de validación
+# Estado de validación
 
-Actualización del 22 de octubre de 2026: el portal ficticio Archivo Costero se construyó en ambas imágenes y se probó en Docker Desktop. `scripts/verify.sh` confirmó PHP 8.4.26 y 8.4.27, SAPI `apache2handler`, `X-Powered-By` y la denegación pública de `/diagnostics.php`. El envío multipart benigno produjo un comprobante SHA-256 en ambos puertos; `tests/isolation.sh` confirmó la separación de redes. La comprobación en Kali y la reproducción manual de la CVE siguen pendientes.
+## Comprobaciones disponibles
 
-**Fecha:** 22 de octubre de 2026. **Entorno usado hasta ahora:** Docker Engine 29.9.1 sobre Docker Desktop en Windows, Docker Compose 5.6.0. Este entorno sirve para integrar los contenedores; todavía no sustituye la prueba en Kali Linux dentro de VirtualBox.
+Las imágenes se construyen con PHP 8.4.26 y 8.4.27, Apache/mod_php, la misma aplicación
+y la misma configuración de laboratorio. `scripts/verify.sh` comprueba versión servida por
+HTTP, SAPI, configuración efectiva, acceso local a los diagnósticos y una carga multipart
+benigna con huella SHA-256. `tests/isolation.sh` comprueba que las redes PHP estén separadas.
+`scripts/compare-workers.sh` registra PID y configuración para atribuir solicitudes consecutivas.
 
-## Resultados observados
+## Evidencia que debe conservar el instructor
 
-| Prueba | Resultado |
-|---|---|
-| Construcción y arranque | Se construyeron ambas imágenes PHP y arrancaron cuatro contenedores. Los dos PHP quedaron sanos. |
-| Versión atendida por Apache | `8.4.26 / apache2handler` en `127.0.0.1:8081`; `8.4.27 / apache2handler` en `127.0.0.1:8082`. |
-| Carga multipart benigna | Ambas instancias procesaron `README.md` e informaron un SHA-256 igual al calculado en el anfitrión. |
-| Restauración individual | `reset vulnerable` creó un contenedor vulnerable nuevo; el identificador del contenedor corregido permaneció igual. Ambos servicios respondieron después. |
-| Fallo individual | Al detener `vulnerable`, el corregido siguió respondiendo con HTTP 200; la ruta vulnerable dejó de responder. Tras iniciar el vulnerable, ambas verificaciones pasaron. |
-| Redes Docker | Las conexiones TCP entre los dos PHP fueron bloqueadas en ambos sentidos. Una conexión de cada PHP a `1.1.1.1:80` también fue bloqueada. Solo las pasarelas publicaron puertos, ambos en `127.0.0.1`. |
-| Transporte offline | Se exportó un archivo de 344 228 352 bytes, se comprobó su SHA-256 y `docker image load` importó las dos imágenes PHP y HAProxy. |
-| Captura para pruebas manuales | `scripts/capture.sh` conservó versión, imagen, configuración, logs, recursos y estado de ambos PHP. Se probó también con `vulnerable` detenido: registró su estado `exited` y HTTP `000`, mientras `patched` respondió HTTP 200. Después se inició `vulnerable` y pasó `scripts/verify.sh`. |
-| Despliegue simplificado | `bash deploy.sh --offline` reutilizó las imágenes locales, inició los cuatro servicios y pasó la verificación de ambas versiones. La ruta de importación automática y la construcción desde un clon nuevo aún deberán validarse en Kali. |
+Para cada ejecución, conserva el resultado de:
 
-La evidencia local se guardó en `evidence/local-docker-2026-10-22/` y el estado previo a `reset` en `evidence/vulnerable-20261022T183327Z/`. Esta carpeta está excluida de Git para no mezclar registros generados con el código fuente. El archivo de imágenes se encuentra en `offline/`; su SHA-256 es `e16b55516dd42339375eb22d8f55991d32cdf7603b70977738263ff57a90a62b`.
+```bash
+bash scripts/verify.sh
+bash tests/isolation.sh
+bash scripts/compare-workers.sh
+bash scripts/capture.sh baseline
+```
 
-La [observación inicial de las CVE](cve-observation.md) registra la línea base local, las diferencias documentadas por PHP y los criterios necesarios para interpretar una prueba posterior.
+Después de una prueba autorizada, toma otra captura antes de restaurar el servicio. Registra
+versión de imagen, SAPI, configuración, PID, código HTTP, logs, estado `OOMKilled`, código de
+salida y uso de memoria. Un cambio de PID, una terminación, un timeout, un HTTP 500 o un OOM
+del contenedor se clasifican como fallos operativos hasta contar con instrumentación que
+demuestre corrupción o consumo de estado residual.
 
-## Correcciones durante la integración
+## Estado de las CVE
 
-Las pasarelas se detuvieron inicialmente por el límite de 64 MiB (`OOMKilled=true`, salida 137). Se limitaron a un hilo y se aumentó el límite a 128 MiB; ambas quedaron activas. El primer verificador consultaba `PHP_SAPI` desde la CLI y obtenía `cli`; ahora compara la versión CLI con la versión y el SAPI que devuelve Apache por HTTP.
-
-## Lo que falta
-
-1. Repetir `scripts/verify.sh`, `tests/isolation.sh`, la carga multipart y `reset` dentro de Kali en VirtualBox.
-2. Desde otra máquina de la LAN, comprobar que las direcciones de Kali en los puertos 8081 y 8082 no responden.
-3. Medir memoria, CPU y tiempos bajo concurrencia acotada en la VM real.
-4. Diseñar y ejecutar pruebas diagnósticas de OOM y estado global con controles comparables. **Todavía no se ha reproducido ni descartado ninguna de las dos CVE en este proyecto.**
-
-Un error HTTP, una caída o un mensaje del verificador no se interpretará como evidencia de RCE.
-
+Este repositorio no declara reproducida CVE-2026-109618 ni CVE-2026-109619. La cadena
+`session.upload_progress` + LFI de la PoC necesita una vulnerabilidad de inclusión local
+adicional y no se incorpora al portal; atribuir su efecto a PHP sería incorrecto. Una
+demostración válida necesita una prueba controlada del comportamiento interno, comparación
+con 8.4.27 y evidencia independiente de la condición vulnerable. La ejecución de Docker
+debe realizarse en la VM Kali aislada y no puede sustituirse por una afirmación estática de
+la versión.

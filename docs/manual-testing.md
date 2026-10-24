@@ -29,14 +29,14 @@ bash scripts/capture.sh antes
 
 `deploy.sh --offline` importa el archivo de imágenes verificado cuando hace falta, inicia Compose y ejecuta `scripts/verify.sh`. Sin `--offline`, el mismo comando puede construir las imágenes si todavía faltan y no hay paquete local.
 
-Abre `http://127.0.0.1:8081/` y `http://127.0.0.1:8082/` **dentro de Kali**. La primera dirección atiende PHP 8.4.26 y la segunda PHP 8.4.27. Descubre la versión mediante la cabecera HTTP y sigue [el desafío](ctf.md). `/diagnostics.php` no está disponible por la pasarela; `scripts/capture.sh` lo consulta desde dentro del contenedor para registrar el PID. `scripts/verify.sh` comprueba versión, SAPI y enlace local; `tests/isolation.sh` comprueba que los contenedores PHP no tengan conectividad directa entre sí ni salida TCP directa de la red interna.
+Abre `http://127.0.0.1:8081/` y `http://127.0.0.1:8082/` **dentro de Kali**. La primera dirección atiende PHP 8.4.26 y la segunda PHP 8.4.27. Descubre la versión mediante la cabecera HTTP y sigue [el desafío](ctf.md). `/diagnostics.php` no está disponible por la pasarela; `scripts/capture.sh` lo consulta desde dentro del contenedor para registrar el PID. `scripts/verify.sh` comprueba versión, SAPI, enlace local y una carga multipart benigna; `tests/isolation.sh` comprueba que los contenedores PHP no tengan conectividad directa entre sí ni salida TCP directa de la red interna. `bash scripts/compare-workers.sh` registra el PID y la configuración efectiva de cada instancia para comparar solicitudes consecutivas.
 
 Si usas Docker Desktop en Windows para un ensayo separado, ejecuta los mismos comandos con Git Bash. `127.0.0.1` se refiere entonces a Windows. No confundas ese resultado con una validación de Kali.
 
 ## Registro de una prueba manual
 
 1. Toma `bash scripts/capture.sh antes-<nombre>` para conservar el estado inicial.
-2. Realiza la prueba autorizada en una sola versión por vez y anota la acción exacta en el archivo `observacion.md` de esa captura.
+2. Realiza la prueba autorizada en una sola versión por vez y anota la acción exacta en el archivo `observacion.md` de esa captura. No uses la cadena de sesión+LFI de la PoC como prueba de estas CVE: requiere una LFI adicional y no representa por sí sola un fallo de PHP.
 3. Antes de reiniciar o restaurar, toma `bash scripts/capture.sh despues-<nombre>`. Este comando intenta conservar estado, logs y recursos aunque un PHP no responda.
 4. Compara ambas versiones bajo condiciones equivalentes. Distingue un error de PHP, un OOM del contenedor (`OOMKilled`), la muerte de un trabajador Apache y un cambio de PID.
 5. Si una conclusión depende de estado entre solicitudes, comprueba que las solicitudes correspondan al **mismo PID**. Si no puedes establecerlo, registra el resultado como no concluyente.
