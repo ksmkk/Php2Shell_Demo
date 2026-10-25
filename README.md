@@ -79,6 +79,8 @@ Las dos imágenes usan la misma carpeta `app/public/`, `config/php/lab.ini` y `c
 
 Los contenedores PHP tienen un límite inicial de 512 MiB y un CPU cada uno. El `memory_limit` de PHP es 128 MiB. Mide estos límites en la VM antes de cualquier prueba potencialmente disruptiva; un límite de contenedor demasiado bajo puede matar el proceso antes de que PHP produzca un diagnóstico útil. El proceso maestro de la imagen oficial Apache conserva los privilegios requeridos por su configuración de puerto 80; esto es un riesgo residual dentro de una VM dedicada.
 
+La [guía del instructor](docs/instructor-guide.md) contiene dos diagramas de los mecanismos documentados por PHP y un control de OOM ordinario con `bash scripts/demo-oom.sh vulnerable|patched <etiqueta>`. El control usa la CLI dentro de las imágenes existentes y no reproduce por sí mismo ninguna CVE.
+
 ## Estado de validación
 
 El repositorio incluye verificaciones reproducibles de versiones, SAPI, configuración,
