@@ -16,7 +16,7 @@ docker compose config --quiet
 
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 dest="$ROOT/evidence/${stamp}-${label}"
-mkdir -p "$dest"
+mkdir "$dest" || { echo "La carpeta de evidencia ya existe: $dest" >&2; exit 1; }
 
 {
     echo "captured_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"

@@ -31,9 +31,13 @@ for entry in vulnerable:8.4.26 patched:8.4.27; do
     trap 'rm -f "$sample"' EXIT
     printf 'Archivo Costero - prueba multipart\n' > "$sample"
     expected_digest="$(sha256sum "$sample" | awk '{print $1}')"
+    sample_for_curl="$sample"
+    case "$(uname -s)" in
+        MINGW*|MSYS*) sample_for_curl="$(cygpath -w "$sample")" ;;
+    esac
     receipt="$(curl --fail --silent --show-error --max-time 5 \
         -F 'PHP_SESSION_UPLOAD_PROGRESS=verificacion-benigna' \
-        -F "sample=@${sample};filename=verificacion.txt" \
+        -F "sample=@${sample_for_curl};filename=verificacion.txt" \
         "http://${binding}/upload.php")"
     grep -q 'Documento recibido para revisión inicial' <<< "$receipt" || { echo "$service: carga multipart no confirmada" >&2; exit 1; }
     grep -q "$expected_digest" <<< "$receipt" || { echo "$service: huella multipart inesperada" >&2; exit 1; }
